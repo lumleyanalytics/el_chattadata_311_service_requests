@@ -1,0 +1,9 @@
+# Local Terraform files
+.terraform/                # Ignore all files in the .terraform directory
+.terraform.lock.hcl        # Ignore the lock file, specific to your environment
+terraform.tfstate          # Ignore the main state file
+terraform.tfstate.*        # Ignore backup or other versions of the state file
+tfplan                      # Ignore plan output files
+
+# General sensitive files
+*.tfvars                    # Ignore variable definition files that might contain sensitive data
