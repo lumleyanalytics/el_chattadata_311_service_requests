@@ -32,14 +32,15 @@ jobs:
         run: sudo apt-get install -y zip
 
       # Step 4: Zip and upload each subfolder to GCS
-      env:
-        BUCKET_NAME: "lumley-analytics-cloud-run-functions"
-      run: |
-        for dir in scripts/*/; do
-            folder_name=$(basename "$dir")
-            zip_file="${folder_name}.zip"
-            zip -r "$zip_file" "$dir" -x "*.DS_Store"
-            gsutil cp "$zip_file" "gs://$BUCKET_NAME/$zip_file"
-            rm "$zip_file"
-            echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
-        done
+      - name: Zip and upload each subfolder to GCS
+        env:
+          BUCKET_NAME: "lumley-analytics-cloud-run-functions"
+        run: |
+          for dir in scripts/*/; do
+              folder_name=$(basename "$dir")
+              zip_file="${folder_name}.zip"
+              zip -r "$zip_file" "$dir" -x "*.DS_Store"
+              gsutil cp "$zip_file" "gs://$BUCKET_NAME/$zip_file"
+              rm "$zip_file"
+              echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
+          done
