@@ -17,12 +17,6 @@ variable "composer_environment_name" {
   default     = "lumley-analytics-composer-env"
 }
 
-variable "gcs_bucket_name" {
-  description = "Name of the GCS bucket"
-  type        = string
-  default     = "lumley_analytics_seeds"
-}
-
 variable "bigquery_dataset_id" {
   description = "BigQuery dataset ID"
   type        = string

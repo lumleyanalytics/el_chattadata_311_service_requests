@@ -1,0 +1,38 @@
+name: Sync Scripts to GCS
+
+on:
+  push:
+    paths:
+      - "scripts/**"  # Trigger only when files in the scripts folder change
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  sync-scripts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Install zip utility
+        run: sudo apt-get install -y zip
+
+      - name: Zip and upload each subfolder to GCS
+        env:
+          BUCKET_NAME: "lumley-analytics-cloud-run-functions"
+        run: |
+          for dir in scripts/*/; do
+              folder_name=$(basename "$dir")
+              zip_file="${folder_name}.zip"
+              zip -r "$zip_file" "$dir" -x "*.DS_Store"
+              gsutil cp "$zip_file" "gs://$BUCKET_NAME/$zip_file"
+              rm "$zip_file"
+              echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
+          done
