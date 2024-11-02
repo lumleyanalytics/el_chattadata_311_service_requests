@@ -59,12 +59,20 @@ module "composer" {
   environment_name   = var.composer_environment_name
 }
 
-# GCS Bucket Module
-module "gcs" {
+# GCS Bucket Module - lumley_analytics_seeds
+module "gcs_bucket_lumley_analytics_seeds" {
   source      = "./gcs_module"
   project_id  = var.project_id
   region      = var.region
-  bucket_name = var.gcs_bucket_name
+  bucket_name = "lumley_analytics_seeds"
+}
+
+# GCS Bucket Module - lumley-analytics-cloud-run-functions
+module "gcs_bucket_lumley-analytics-cloud-run-functions" {
+  source      = "./gcs_module"
+  project_id  = var.project_id
+  region      = var.region
+  bucket_name = "lumley-analytics-cloud-run-functions"
 }
 
 # BigQuery Dataset Module
