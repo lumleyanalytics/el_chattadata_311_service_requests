@@ -14,24 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 1: Authenticate with Google Cloud using the `auth` action
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      # Step 2: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          install_components: gsutil
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
 
-      # Step 3: Install zip utility
       - name: Install zip utility
         run: sudo apt-get install -y zip
 
-      # Step 4: Zip and upload each subfolder to GCS
       - name: Zip and upload each subfolder to GCS
         env:
           BUCKET_NAME: "lumley-analytics-cloud-run-functions"
@@ -44,6 +36,7 @@ jobs:
               rm "$zip_file"
               echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
           done
+
       # Set up Terraform
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
@@ -51,12 +44,15 @@ jobs:
           terraform_version: 1.0.0
 
       - name: Terraform Init
+        working-directory: ./terraform
         run: terraform init
 
       # Targeted Terraform Destroy for Cloud Functions Module
       - name: Terraform Destroy Cloud Functions
+        working-directory: ./terraform
         run: terraform destroy -target=module.cloud_functions -auto-approve
 
       # Targeted Terraform Apply for Cloud Functions Module
       - name: Terraform Apply Cloud Functions
+        working-directory: ./terraform
         run: terraform apply -target=module.cloud_functions -auto-approve
