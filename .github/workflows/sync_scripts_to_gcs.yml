@@ -43,6 +43,12 @@ jobs:
         with:
           terraform_version: 1.0.0
 
+      # Authenticate with Google Cloud for Terraform
+      - name: Google Cloud Auth for Terraform
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
