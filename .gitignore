@@ -7,3 +7,5 @@ tfplan                      # Ignore plan output files
 
 # General sensitive files
 *.tfvars                    # Ignore variable definition files that might contain sensitive data
+
+.DS_Store
