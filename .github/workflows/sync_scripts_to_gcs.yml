@@ -1,4 +1,4 @@
-name: Sync Scripts to GCS
+name: Sync Scripts to GCS and Update Cloud Functions
 
 on:
   push:
@@ -36,3 +36,20 @@ jobs:
               rm "$zip_file"
               echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
           done
+
+      # Set up Terraform
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.0
+
+      - name: Terraform Init
+        run: terraform init
+
+      # Targeted Terraform Destroy for Cloud Functions Module
+      - name: Terraform Destroy Cloud Functions
+        run: terraform destroy -target=module.cloud_functions -auto-approve
+
+      # Targeted Terraform Apply for Cloud Functions Module
+      - name: Terraform Apply Cloud Functions
+        run: terraform apply -target=module.cloud_functions -auto-approve
