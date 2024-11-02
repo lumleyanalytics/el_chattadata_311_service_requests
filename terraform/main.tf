@@ -91,3 +91,11 @@ module "permissions" {
   composer_service_account  = google_service_account.terraform_sa.email
   composer_environment_name = var.composer_environment_name
 }
+
+module "cloud_functions" {
+  source          = "./cloud_functions_module"
+  project_id      = var.project_id
+  region          = var.region
+  gcs_bucket_name = module.gcs_bucket_lumley-analytics-cloud-run-functions.bucket_name  # Use the output from gcs_module
+  function_prefix = "lumley-analytics-functions"
+}
