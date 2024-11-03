@@ -1,5 +1,4 @@
 pandas
 google-cloud-storage
 snowflake-connector-python
-snowflake-connector
 python-dotenv
