@@ -14,12 +14,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Step 1: Authenticate with Google Cloud
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Step 2: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+          install_components: gsutil
 
       - name: Install zip utility
         run: sudo apt-get install -y zip
@@ -31,7 +37,8 @@ jobs:
           for dir in scripts/*/; do
               folder_name=$(basename "$dir")
               zip_file="${folder_name}.zip"
-              zip -r "$zip_file" "$dir" -x "*.DS_Store"
+              # Navigate to the subdirectory and zip the contents without including the directory structure
+              (cd "$dir" && zip -r "../../$zip_file" . -x "*.DS_Store")
               gsutil cp "$zip_file" "gs://$BUCKET_NAME/$zip_file"
               rm "$zip_file"
               echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
@@ -43,12 +50,7 @@ jobs:
         with:
           terraform_version: 1.0.0
 
-      # Authenticate with Google Cloud for Terraform
-      - name: Google Cloud Auth for Terraform
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
+      # Terraform Init
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
