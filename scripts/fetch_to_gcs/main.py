@@ -58,7 +58,7 @@ def clean_description_field(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 # Main function for Cloud Function
-def fetch_to_gcs(request: Request):
+def main(request: Request):
     request_json = request.get_json(silent=True)
     
     # Extract parameters from the request JSON
