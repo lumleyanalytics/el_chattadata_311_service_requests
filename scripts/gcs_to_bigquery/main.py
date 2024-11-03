@@ -29,6 +29,7 @@ def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table
     job_config = bigquery.LoadJobConfig(
         write_disposition=write_disposition,  # Overwrite or append
         autodetect=True,
+        skip_leading_rows=1,  # Specify that the first row contains headers
         source_format=bigquery.SourceFormat.CSV
     )
 
@@ -36,6 +37,7 @@ def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table
     job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
     job.result()  # Wait for the job to complete
     print(f"Data loaded into BigQuery table {table_ref} with disposition {write_disposition}")
+
 
 def main(request: Request):
     # Parse JSON payload from the request
