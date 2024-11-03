@@ -21,25 +21,23 @@ def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
     logging.info(f"Downloaded data from GCS bucket {bucket_name}, file {file_name}")
     return df
 
-def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_id: str, write_disposition: str = "WRITE_TRUNCATE"):
-    """Upload a DataFrame to BigQuery, treating all columns as STRING to retain column names."""
+def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_id: str, truncate=False):
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
-    # Define schema with all columns as STRING
     schema = [bigquery.SchemaField(col, "STRING") for col in df.columns]
+    write_disposition = "WRITE_TRUNCATE" if truncate else "WRITE_APPEND"
 
-    # Configure load job with schema
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition=write_disposition,
         source_format=bigquery.SourceFormat.CSV
     )
 
-    # Load data to BigQuery
     job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
-    job.result()  # Wait for the job to complete
-    logging.info(f"Data loaded into BigQuery table {table_ref} with disposition {write_disposition}")
+    job.result()
+    print(f"{'Truncated and loaded' if truncate else 'Appended'} {len(df)} rows to BigQuery table {table_ref}")
+
 
 def gcs_to_bigquery(
     gcs_bucket: str,

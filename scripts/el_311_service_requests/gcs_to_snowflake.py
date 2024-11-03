@@ -23,16 +23,10 @@ def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
     logging.info(f"Downloaded data from GCS bucket {bucket_name}, file {file_name}")
     return df
 
-def upload_to_snowflake(df: pd.DataFrame, user: str, password: str, account: str, warehouse: str, database: str, schema: str, table: str):
-    """Upload a DataFrame to Snowflake, creating the table with all VARCHAR(16777216) columns."""
-    
-    # Replace NaN values with None
+def upload_to_snowflake(df: pd.DataFrame, user: str, password: str, account: str, warehouse: str, database: str, schema: str, table: str, truncate=False):
     df = df.where(pd.notnull(df), None)
-
-    # Convert column names to uppercase for Snowflake compatibility
     df.columns = [col.upper() for col in df.columns]
 
-    # Connect to Snowflake
     conn = snowflake.connector.connect(
         user=user,
         password=password,
@@ -43,26 +37,17 @@ def upload_to_snowflake(df: pd.DataFrame, user: str, password: str, account: str
     )
     cursor = conn.cursor()
 
-    # Generate CREATE TABLE statement with all VARCHAR(16777216) columns
-    column_definitions = [f"{column} VARCHAR(16777216)" for column in df.columns]
-    create_table_query = f"""
-    CREATE OR REPLACE TABLE {schema}.{table} (
-        {', '.join(column_definitions)}
-    );
-    """
-    cursor.execute(create_table_query)
-    logging.info(f"Created or replaced table {schema}.{table} with all columns as VARCHAR(16777216).")
+    if truncate:
+        cursor.execute(f"TRUNCATE TABLE {schema}.{table}")
+        print(f"Truncated Snowflake table {schema}.{table}")
 
-    # Write data to Snowflake in bulk with write_pandas
     success, nchunks, nrows, _ = write_pandas(conn, df, table_name=table, schema=schema)
-    
     if success:
-        logging.info(f"Successfully loaded {nrows} rows into {schema}.{table} in Snowflake.")
+        print(f"Appended {nrows} rows to Snowflake table {schema}.{table}")
     else:
-        logging.error("Data load to Snowflake failed.")
-
-    # Close the connection
+        print("Data load to Snowflake failed.")
     conn.close()
+
 
 def gcs_to_snowflake(
     gcs_bucket: str,
