@@ -6,6 +6,8 @@ resource "google_cloudfunctions_function" "el_311_service_requests" {
   entry_point = "main"
   region      = var.region
 
+  available_memory_mb   = 1024
+
   source_archive_bucket = var.gcs_bucket_name
   source_archive_object = "el_311_service_requests.zip"
 

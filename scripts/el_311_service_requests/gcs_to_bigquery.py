@@ -33,7 +33,6 @@ def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition=write_disposition,
-        skip_leading_rows=1,  # Skip the header row if DataFrame includes column names
         source_format=bigquery.SourceFormat.CSV
     )
 
