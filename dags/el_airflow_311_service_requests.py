@@ -24,6 +24,7 @@ with DAG(
 
     def get_secret(secret_id):
         """Retrieve the secret value from Google Secret Manager."""
+        project_id = "lumley-analytics"
         client = secretmanager.SecretManagerServiceClient()
         name = f"projects/{os.getenv('GCP_PROJECT_ID')}/secrets/{secret_id}/versions/latest"
         response = client.access_secret_version(request={"name": name})
