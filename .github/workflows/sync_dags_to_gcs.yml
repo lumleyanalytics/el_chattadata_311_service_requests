@@ -1,0 +1,31 @@
+name: Sync DAGs to GCS
+
+on:
+  push:
+    paths:
+      - "dags/**"  # Trigger only when files in the dags folder change
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  sync-dags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Install gsutil
+        run: sudo apt-get install -y google-cloud-sdk
+
+      - name: Sync DAGs to GCS
+        env:
+          BUCKET_NAME: "us-east4-lumley-analytics-c-55c477d8-bucket"
+        run: |
+          gsutil -m rsync -r dags gs://$BUCKET_NAME/dags

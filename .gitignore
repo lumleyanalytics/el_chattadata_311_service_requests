@@ -3,5 +3,7 @@ terraform/.terraform/               # Ignore all files in the .terraform directo
 terraform/.terraform/*
 # General sensitive files
 *.tfvars                    # Ignore variable definition files that might contain sensitive data
+*.code-workspace
+.env
 
 .DS_Store

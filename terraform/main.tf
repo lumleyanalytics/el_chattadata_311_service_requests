@@ -57,6 +57,12 @@ module "composer" {
   project_id         = var.project_id
   region             = var.region
   environment_name   = var.composer_environment_name
+
+  # Pass the Cloud Function URLs as variables
+  fetch_to_gcs_url       = module.cloud_functions.fetch_to_gcs_url
+  gcs_to_bigquery_url    = module.cloud_functions.gcs_to_bigquery_url
+  gcs_to_snowflake_url   = module.cloud_functions.gcs_to_snowflake_url
+
 }
 
 # GCS Bucket Module - lumley_analytics_seeds
@@ -99,3 +105,16 @@ module "cloud_functions" {
   gcs_bucket_name = module.gcs_bucket_lumley-analytics-cloud-run-functions.bucket_name  # Use the output from gcs_module
   function_prefix = "lumley-analytics-functions"
 }
+
+module "google_secrets" {
+  source     = "./google_secrets_module"
+  project_id = var.project_id
+
+  secrets = {
+    CHATTADATA_API_KEY = var.chattadata_api_key
+    SNOWFLAKE_USER = var.snowflake_user
+    SNOWFLAKE_PASSWORD = var.snowflake_password
+    SNOWFLAKE_ACCOUNT = var.snowflake_account
+  }
+}
+
