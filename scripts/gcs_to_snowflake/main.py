@@ -6,7 +6,7 @@ import snowflake.connector
 from dotenv import load_dotenv
 from flask import Request
 
-# Load environment variables
+# Load environment variables (optional if there are static values you want to fallback on)
 load_dotenv()
 
 def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
@@ -63,16 +63,25 @@ def upload_to_snowflake(df: pd.DataFrame, user: str, password: str, account: str
     conn.close()
 
 def main(request: Request):
-    # Retrieve parameters from environment variables
-    gcs_bucket = os.getenv('GCS_BUCKET')
-    gcs_file_name = os.getenv('GCS_FILE_NAME')
-    sf_user = os.getenv("SNOWFLAKE_USER")
-    sf_password = os.getenv("SNOWFLAKE_PASSWORD")
-    sf_account = os.getenv("SNOWFLAKE_ACCOUNT")
-    sf_warehouse = os.getenv("SNOWFLAKE_WAREHOUSE")
-    sf_database = os.getenv("SNOWFLAKE_DATABASE")
-    sf_schema = os.getenv("SNOWFLAKE_SCHEMA")
-    sf_table = os.getenv("SNOWFLAKE_TABLE")
+    # Parse JSON payload from the request
+    request_json = request.get_json(silent=True)
+    if not request_json:
+        return "Invalid or missing JSON payload", 400
+
+    # Retrieve parameters from the request JSON
+    gcs_bucket = request_json.get('gcs_bucket')
+    gcs_file_name = request_json.get('gcs_file_name')
+    sf_user = request_json.get("sf_user")
+    sf_password = request_json.get("sf_password")
+    sf_account = request_json.get("sf_account")
+    sf_warehouse = request_json.get("sf_warehouse")
+    sf_database = request_json.get("sf_database")
+    sf_schema = request_json.get("sf_schema")
+    sf_table = request_json.get("sf_table")
+
+    # Validate required parameters
+    if not all([gcs_bucket, gcs_file_name, sf_user, sf_password, sf_account, sf_warehouse, sf_database, sf_schema, sf_table]):
+        return "Missing required parameters in JSON payload", 400
 
     # Download data from GCS
     df = download_from_gcs(gcs_bucket, gcs_file_name)

@@ -1,4 +1,3 @@
-# gcs_to_bigquery.py
 import os
 import pandas as pd
 from google.cloud import storage, bigquery
@@ -6,7 +5,7 @@ from dotenv import load_dotenv
 from io import StringIO
 from flask import Request
 
-# Load environment variables from .env if they exist
+# Load environment variables (optional if there are static fallback values)
 load_dotenv()
 
 def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
@@ -39,13 +38,22 @@ def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table
     print(f"Data loaded into BigQuery table {table_ref} with disposition {write_disposition}")
 
 def main(request: Request):
-    # Retrieve parameters from environment variables
-    gcs_bucket = os.getenv('GCS_BUCKET')
-    gcs_file_name = os.getenv('GCS_FILE_NAME')
-    bq_project_id = os.getenv('BQ_PROJECT_ID')
-    bq_dataset_id = os.getenv('BQ_DATASET_ID')
-    bq_table_id = os.getenv('BQ_TABLE_ID')
-    write_disposition = os.getenv('WRITE_DISPOSITION', 'WRITE_TRUNCATE')
+    # Parse JSON payload from the request
+    request_json = request.get_json(silent=True)
+    if not request_json:
+        return "Invalid or missing JSON payload", 400
+
+    # Retrieve parameters from the request JSON
+    gcs_bucket = request_json.get('gcs_bucket')
+    gcs_file_name = request_json.get('gcs_file_name')
+    bq_project_id = request_json.get('bq_project_id')
+    bq_dataset_id = request_json.get('bq_dataset_id')
+    bq_table_id = request_json.get('bq_table_id')
+    write_disposition = request_json.get('write_disposition', 'WRITE_TRUNCATE')
+
+    # Validate required parameters
+    if not all([gcs_bucket, gcs_file_name, bq_project_id, bq_dataset_id, bq_table_id]):
+        return "Missing required parameters in JSON payload", 400
 
     # Download data from GCS
     df = download_from_gcs(gcs_bucket, gcs_file_name)
