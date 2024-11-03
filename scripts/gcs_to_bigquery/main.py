@@ -1,4 +1,5 @@
 import os
+import argparse
 import pandas as pd
 from google.cloud import storage, bigquery
 from dotenv import load_dotenv
@@ -6,7 +7,7 @@ from io import StringIO
 from flask import Request
 import logging
 
-# Load environment variables (optional if there are static fallback values)
+# Load environment variables from .env if they exist
 load_dotenv()
 
 def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
@@ -16,20 +17,24 @@ def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
     blob = bucket.blob(file_name)
 
     # Download CSV data and read into DataFrame
-    data = blob.download_as_text()  # Ensure this is treated as a UTF-8 string
-    df = pd.read_csv(StringIO(data))
+    data = blob.download_as_text()
+    df = pd.read_csv(StringIO(data))  # Use StringIO for compatibility with pd.read_csv
     logging.info(f"Downloaded data from GCS bucket {bucket_name}, file {file_name}")
     return df
 
 def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_id: str, write_disposition: str = "WRITE_TRUNCATE"):
-    """Upload a DataFrame to BigQuery."""
+    """Upload a DataFrame to BigQuery, treating all columns as STRING to retain column names."""
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
-    # Configure load job
+    # Define schema with all columns as STRING
+    schema = [bigquery.SchemaField(col, "STRING") for col in df.columns]
+
+    # Configure load job with schema
     job_config = bigquery.LoadJobConfig(
-        write_disposition=write_disposition,  # Overwrite or append
-        autodetect=True,
+        schema=schema,
+        write_disposition=write_disposition,
+        skip_leading_rows=1,  # Skip the header row if DataFrame includes column names
         source_format=bigquery.SourceFormat.CSV
     )
 
