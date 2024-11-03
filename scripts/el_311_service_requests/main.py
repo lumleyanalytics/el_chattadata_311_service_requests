@@ -5,7 +5,7 @@ import os
 
 def get_secret(secret_id):
     """Fetch secret from Secret Manager."""
-    project_id = os.getenv("GCP_PROJECT_ID")
+    project_id = "162045639883"
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
     
