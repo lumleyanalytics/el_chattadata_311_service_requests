@@ -7,7 +7,3 @@ variable "project_id" {
 variable "region" {
   type = string
 }
-
-variable "composer_environment_name" {
-  type = string
-}

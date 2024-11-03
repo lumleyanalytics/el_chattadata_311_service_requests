@@ -1,0 +1,4 @@
+google-cloud-secret-manager
+requests
+google-cloud-storage
+python-dotenv

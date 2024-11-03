@@ -42,28 +42,7 @@ data "google_project" "project" {
   project_id = var.project_id
 }
 
-# Grant the Composer GKE service account the roles/composer.ServiceAgentV2Ext role
-resource "google_project_iam_member" "composer_gke_service_agent" {
-  project = var.project_id
-  role    = "roles/composer.ServiceAgentV2Ext"
-  member  = "serviceAccount:service-${data.google_project.project.number}@cloudcomposer-accounts.iam.gserviceaccount.com"
-}
-
 # Step 5: Set up Cloud Composer, GCS, BigQuery, and Permissions Modules
-
-# Composer Module
-module "composer" {
-  source             = "./composer_module"
-  project_id         = var.project_id
-  region             = var.region
-  environment_name   = var.composer_environment_name
-
-  # Pass the Cloud Function URLs as variables
-  fetch_to_gcs_url       = module.cloud_functions.fetch_to_gcs_url
-  gcs_to_bigquery_url    = module.cloud_functions.gcs_to_bigquery_url
-  gcs_to_snowflake_url   = module.cloud_functions.gcs_to_snowflake_url
-
-}
 
 # GCS Bucket Module - lumley_analytics_seeds
 module "gcs_bucket_lumley_analytics_seeds" {
@@ -94,8 +73,7 @@ module "permissions" {
   source                    = "./permissions_module"
   project_id                = var.project_id
   region                    = var.region
-  composer_service_account  = google_service_account.terraform_sa.email
-  composer_environment_name = var.composer_environment_name
+
 }
 
 module "cloud_functions" {
