@@ -22,13 +22,16 @@ with DAG(
     catchup=False,
 ) as dag:
 
+    from google.cloud import secretmanager
+
     def get_secret(secret_id):
-        """Retrieve the secret value from Google Secret Manager."""
-        project_id = "lumley-analytics"
+        project_id = "your-project-id"  # Replace with your actual project ID or fetch from environment variables
         client = secretmanager.SecretManagerServiceClient()
-        name = f"projects/{os.getenv('GCP_PROJECT_ID')}/secrets/{secret_id}/versions/latest"
+        name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+        
         response = client.access_secret_version(request={"name": name})
         return response.payload.data.decode("UTF-8")
+
 
     def trigger_cloud_function(url, payload=None):
         headers = {
