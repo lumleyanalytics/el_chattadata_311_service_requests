@@ -1,9 +1,10 @@
 # gcs_to_bigquery.py
 import os
-import argparse
 import pandas as pd
 from google.cloud import storage, bigquery
 from dotenv import load_dotenv
+from io import StringIO
+from flask import Request
 
 # Load environment variables from .env if they exist
 load_dotenv()
@@ -16,7 +17,7 @@ def download_from_gcs(bucket_name: str, file_name: str) -> pd.DataFrame:
 
     # Download CSV data and read into DataFrame
     data = blob.download_as_text()
-    df = pd.read_csv(pd.io.common.StringIO(data))
+    df = pd.read_csv(StringIO(data))  # Use StringIO from the standard library
     print(f"Downloaded data from GCS bucket {bucket_name}, file {file_name}")
     return df
 
@@ -37,23 +38,19 @@ def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table
     job.result()  # Wait for the job to complete
     print(f"Data loaded into BigQuery table {table_ref} with disposition {write_disposition}")
 
-def main():
-    # Argument parser
-    parser = argparse.ArgumentParser(description="Load data from GCS to BigQuery.")
-    parser.add_argument('--gcs_bucket', required=True, help="GCS bucket name where the file is stored")
-    parser.add_argument('--gcs_file_name', required=True, help="File name in GCS")
-    parser.add_argument('--bq_project_id', required=True, help="BigQuery project ID")
-    parser.add_argument('--bq_dataset_id', required=True, help="BigQuery dataset ID")
-    parser.add_argument('--bq_table_id', required=True, help="BigQuery table ID")
-    parser.add_argument('--write_disposition', default="WRITE_TRUNCATE", choices=["WRITE_TRUNCATE", "WRITE_APPEND"], help="Write mode for BigQuery: overwrite or append")
-
-    args = parser.parse_args()
+def main(request: Request):
+    # Retrieve parameters from environment variables
+    gcs_bucket = os.getenv('GCS_BUCKET')
+    gcs_file_name = os.getenv('GCS_FILE_NAME')
+    bq_project_id = os.getenv('BQ_PROJECT_ID')
+    bq_dataset_id = os.getenv('BQ_DATASET_ID')
+    bq_table_id = os.getenv('BQ_TABLE_ID')
+    write_disposition = os.getenv('WRITE_DISPOSITION', 'WRITE_TRUNCATE')
 
     # Download data from GCS
-    df = download_from_gcs(args.gcs_bucket, args.gcs_file_name)
+    df = download_from_gcs(gcs_bucket, gcs_file_name)
     
     # Upload data to BigQuery
-    upload_to_bigquery(df, args.bq_project_id, args.bq_dataset_id, args.bq_table_id, args.write_disposition)
-
-if __name__ == "__main__":
-    main()
+    upload_to_bigquery(df, bq_project_id, bq_dataset_id, bq_table_id, write_disposition)
+    
+    return "Data successfully transferred from GCS to BigQuery", 200

@@ -4,7 +4,7 @@ from google.cloud import storage
 from snowflake.connector.pandas_tools import write_pandas
 import snowflake.connector
 from dotenv import load_dotenv
-import argparse
+from flask import Request
 
 # Load environment variables
 load_dotenv()
@@ -62,34 +62,31 @@ def upload_to_snowflake(df: pd.DataFrame, user: str, password: str, account: str
     # Close the connection
     conn.close()
 
-def main():
-    parser = argparse.ArgumentParser(description="Load data from GCS to Snowflake.")
-    parser.add_argument('--gcs_bucket', required=True, help="GCS bucket name where the file is stored")
-    parser.add_argument('--gcs_file_name', required=True, help="File name in GCS")
-    parser.add_argument('--sf_user', default=os.getenv("SNOWFLAKE_USER"), help="Snowflake user")
-    parser.add_argument('--sf_password', default=os.getenv("SNOWFLAKE_PASSWORD"), help="Snowflake password")
-    parser.add_argument('--sf_account', default=os.getenv("SNOWFLAKE_ACCOUNT"), help="Snowflake account identifier")
-    parser.add_argument('--sf_warehouse', required=True, help="Snowflake warehouse name")
-    parser.add_argument('--sf_database', required=True, help="Snowflake database name")
-    parser.add_argument('--sf_schema', required=True, help="Snowflake schema name")
-    parser.add_argument('--sf_table', required=True, help="Snowflake table name")
-
-    args = parser.parse_args()
+def main(request: Request):
+    # Retrieve parameters from environment variables
+    gcs_bucket = os.getenv('GCS_BUCKET')
+    gcs_file_name = os.getenv('GCS_FILE_NAME')
+    sf_user = os.getenv("SNOWFLAKE_USER")
+    sf_password = os.getenv("SNOWFLAKE_PASSWORD")
+    sf_account = os.getenv("SNOWFLAKE_ACCOUNT")
+    sf_warehouse = os.getenv("SNOWFLAKE_WAREHOUSE")
+    sf_database = os.getenv("SNOWFLAKE_DATABASE")
+    sf_schema = os.getenv("SNOWFLAKE_SCHEMA")
+    sf_table = os.getenv("SNOWFLAKE_TABLE")
 
     # Download data from GCS
-    df = download_from_gcs(args.gcs_bucket, args.gcs_file_name)
+    df = download_from_gcs(gcs_bucket, gcs_file_name)
     
     # Upload data to Snowflake
     upload_to_snowflake(
         df, 
-        user=args.sf_user, 
-        password=args.sf_password, 
-        account=args.sf_account, 
-        warehouse=args.sf_warehouse, 
-        database=args.sf_database, 
-        schema=args.sf_schema, 
-        table=args.sf_table
+        user=sf_user, 
+        password=sf_password, 
+        account=sf_account, 
+        warehouse=sf_warehouse, 
+        database=sf_database, 
+        schema=sf_schema, 
+        table=sf_table
     )
-
-if __name__ == "__main__":
-    main()
+    
+    return "Data successfully transferred from GCS to Snowflake", 200
