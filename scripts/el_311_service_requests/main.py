@@ -15,7 +15,7 @@ def get_identity_token(audience):
 
 # Function to get a secret from Secret Manager
 def get_secret(secret_id):
-    project_id = os.getenv("GCP_PROJECT_ID")
+    project_id = "162045639883"
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
     response = client.access_secret_version(request={"name": name})
