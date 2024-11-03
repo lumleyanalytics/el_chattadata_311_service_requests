@@ -1,11 +1,10 @@
-# fetch_to_gcs.py
 import os
 import requests
 import pandas as pd
 from google.cloud import storage
 from dotenv import load_dotenv
 from typing import Optional, Dict, Callable
-import argparse
+from flask import Request
 
 # Load environment variables from .env if they exist
 load_dotenv()
@@ -44,6 +43,7 @@ def fetch_api_data(
 
     return pd.DataFrame(all_data)
 
+# Function to upload DataFrame to GCS
 def upload_to_gcs(df: pd.DataFrame, bucket_name: str, file_name: str):
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
@@ -51,36 +51,30 @@ def upload_to_gcs(df: pd.DataFrame, bucket_name: str, file_name: str):
     blob.upload_from_string(df.to_csv(index=False), 'text/csv')
     print(f"Data uploaded to GCS bucket {bucket_name} as {file_name}")
 
-def clean_data(df: pd.DataFrame, cleaning_func: Optional[Callable[[pd.DataFrame], pd.DataFrame]] = None) -> pd.DataFrame:
-    if cleaning_func:
-        df = cleaning_func(df)
-    return df
-
 # Custom cleaning function for description field
 def clean_description_field(df: pd.DataFrame) -> pd.DataFrame:
     if 'description' in df.columns:
         df['description'] = df['description'].apply(lambda x: f'"{x}"' if x and '\\' in str(x) else x)
     return df
 
-def main():
-    # Argument parser
-    parser = argparse.ArgumentParser(description="Fetch data from API and upload to GCS.")
-    parser.add_argument('--api_url', required=True, help="API URL to fetch data from")
-    parser.add_argument('--gcs_bucket', required=True, help="GCS bucket name")
-    parser.add_argument('--gcs_file_name', required=True, help="File name/path in GCS")
-    parser.add_argument('--api_key', help="API key for accessing the API", default=os.getenv("API_KEY"))
-    parser.add_argument('--test_mode', action='store_true', help="Fetch only one batch for testing")
+# Main function for Cloud Function
+def fetch_to_gcs(request: Request):
+    request_json = request.get_json(silent=True)
     
-    args = parser.parse_args()
-    
+    # Extract parameters from the request JSON
+    api_url = request_json.get('api_url')
+    gcs_bucket = request_json.get('gcs_bucket')
+    gcs_file_name = request_json.get('gcs_file_name')
+    api_key = request_json.get('api_key', os.getenv("API_KEY"))
+    test_mode = request_json.get('test_mode', False)
+
     # Fetch data from API
-    df = fetch_api_data(api_url=args.api_url, api_key=args.api_key, test_mode=args.test_mode)
+    df = fetch_api_data(api_url=api_url, api_key=api_key, test_mode=test_mode)
     
     # Clean data if needed
-    df = clean_data(df, clean_description_field)
+    df = clean_description_field(df)
     
     # Upload DataFrame to GCS
-    upload_to_gcs(df, args.gcs_bucket, args.gcs_file_name)
+    upload_to_gcs(df, gcs_bucket, gcs_file_name)
 
-if __name__ == "__main__":
-    main()
+    return f"Data uploaded to {gcs_bucket} as {gcs_file_name}", 200
