@@ -37,7 +37,8 @@ jobs:
           for dir in scripts/*/; do
               folder_name=$(basename "$dir")
               zip_file="${folder_name}.zip"
-              zip -r "$zip_file" "$dir" -x "*.DS_Store"
+              # Navigate to the subdirectory and zip the contents without including the directory structure
+              (cd "$dir" && zip -r "../../$zip_file" . -x "*.DS_Store")
               gsutil cp "$zip_file" "gs://$BUCKET_NAME/$zip_file"
               rm "$zip_file"
               echo "Uploaded $zip_file to gs://$BUCKET_NAME/"
