@@ -25,7 +25,7 @@ with DAG(
     from google.cloud import secretmanager
 
     def get_secret(secret_id):
-        project_id = "your-project-id"  # Replace with your actual project ID or fetch from environment variables
+        project_id = "lumley-analytics"  # Replace with your actual project ID or fetch from environment variables
         client = secretmanager.SecretManagerServiceClient()
         name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
         
