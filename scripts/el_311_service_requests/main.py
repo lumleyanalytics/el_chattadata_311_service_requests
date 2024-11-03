@@ -1,38 +1,48 @@
-from flask import Request
-from google.cloud import secretmanager
-import requests
 import os
+import requests
+from google.auth import default
+from google.auth.transport.requests import Request
+from google.cloud import secretmanager
 
+# Function to get an identity token
+def get_identity_token(audience):
+    credentials, _ = default()
+    auth_request = Request()
+    credentials.refresh(auth_request)
+    token = credentials.id_token_with_audience(audience)
+    return token
+
+# Function to get secret from Secret Manager
 def get_secret(secret_id):
-    """Fetch secret from Secret Manager."""
-    project_id = "162045639883"
+    project_id = os.getenv("GCP_PROJECT_ID")
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
-    
     response = client.access_secret_version(request={"name": name})
     return response.payload.data.decode("UTF-8")
 
+# Function to trigger a Cloud Function with an identity token
 def trigger_cloud_function(url, payload=None):
-    """Trigger a Cloud Function with the given URL and payload."""
+    token = get_identity_token(url)  # Get the identity token for the Cloud Function URL
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {os.getenv('GCP_IDENTITY_TOKEN')}"
+        "Authorization": f"Bearer {token}"  # Include the token in the Authorization header
     }
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
     return response.json()
 
-def main(request: Request):
-    """Entrypoint for the Cloud Run Function, ignoring any incoming JSON payload."""
-    try:
-        # Fetch URLs from environment variables
-        fetch_to_gcs_url = os.getenv("FETCH_TO_GCS_URL")
-        gcs_to_bigquery_url = os.getenv("GCS_TO_BIGQUERY_URL")
-        gcs_to_snowflake_url = os.getenv("GCS_TO_SNOWFLAKE_URL")
+# Main function to orchestrate function calls
+def main():
+    # URLs for each Cloud Function, obtained from environment variables
+    fetch_to_gcs_url = os.getenv("FETCH_TO_GCS_URL")
+    gcs_to_bigquery_url = os.getenv("GCS_TO_BIGQUERY_URL")
+    gcs_to_snowflake_url = os.getenv("GCS_TO_SNOWFLAKE_URL")
 
-        # Call fetch_to_gcs
-        fetch_to_gcs_response = trigger_cloud_function(
-            url=fetch_to_gcs_url,
+    # Call each function
+    try:
+        # Fetch data to GCS
+        fetch_response = trigger_cloud_function(
+            fetch_to_gcs_url,
             payload={
                 "api_url": "https://www.chattadata.org/resource/8qb9-5fja.json",
                 "gcs_bucket": "lumley_analytics_seeds",
@@ -41,10 +51,11 @@ def main(request: Request):
                 "test_mode": True
             }
         )
+        print("Fetch to GCS response:", fetch_response)
 
-        # Call gcs_to_bigquery and gcs_to_snowflake
-        gcs_to_bigquery_response = trigger_cloud_function(
-            url=gcs_to_bigquery_url,
+        # GCS to BigQuery
+        bq_response = trigger_cloud_function(
+            gcs_to_bigquery_url,
             payload={
                 "gcs_bucket": "lumley_analytics_seeds",
                 "gcs_file_name": "data/chattadata_311_service_requests.csv",
@@ -54,9 +65,11 @@ def main(request: Request):
                 "write_disposition": "WRITE_TRUNCATE"
             }
         )
+        print("GCS to BigQuery response:", bq_response)
 
-        gcs_to_snowflake_response = trigger_cloud_function(
-            url=gcs_to_snowflake_url,
+        # GCS to Snowflake
+        snowflake_response = trigger_cloud_function(
+            gcs_to_snowflake_url,
             payload={
                 "gcs_bucket": "lumley_analytics_seeds",
                 "gcs_file_name": "data/chattadata_311_service_requests.csv",
@@ -69,12 +82,12 @@ def main(request: Request):
                 "sf_table": "SRC_CHATTADATA_311_SERVICE_REQUESTS"
             }
         )
+        print("GCS to Snowflake response:", snowflake_response)
 
-        return {
-            "fetch_to_gcs": fetch_to_gcs_response,
-            "gcs_to_bigquery": gcs_to_bigquery_response,
-            "gcs_to_snowflake": gcs_to_snowflake_response
-        }, 200
-
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP error occurred: {e}")
     except Exception as e:
-        return str(e), 500
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    main()

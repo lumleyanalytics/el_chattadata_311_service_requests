@@ -76,13 +76,20 @@ module "permissions" {
 
 }
 
+# main.tf
+
 module "cloud_functions" {
-  source          = "./cloud_functions_module"
-  project_id      = var.project_id
-  region          = var.region
-  gcs_bucket_name = module.gcs_bucket_lumley-analytics-cloud-run-functions.bucket_name  # Use the output from gcs_module
-  function_prefix = "lumley-analytics-functions"
+  source                 = "./cloud_functions_module"
+  project_id             = var.project_id
+  region                 = var.region
+  gcs_bucket_name        = "lumley-analytics-cloud-run-functions"
+  function_prefix        = "lumley-analytics-functions"
+
+  fetch_to_gcs_url       = module.cloud_functions.fetch_to_gcs_url
+  gcs_to_bigquery_url    = module.cloud_functions.gcs_to_bigquery_url
+  gcs_to_snowflake_url   = module.cloud_functions.gcs_to_snowflake_url
 }
+
 
 module "google_secrets" {
   source     = "./google_secrets_module"
@@ -95,4 +102,3 @@ module "google_secrets" {
     SNOWFLAKE_ACCOUNT = var.snowflake_account
   }
 }
-

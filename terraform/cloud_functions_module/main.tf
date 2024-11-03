@@ -43,7 +43,6 @@ resource "google_cloudfunctions_function" "gcs_to_snowflake" {
   trigger_http = true
 }
 
-# Define Cloud Function for el_311_service_requests
 resource "google_cloudfunctions_function" "el_311_service_requests" {
   name        = "${var.function_prefix}-el_311_service_requests"
   runtime     = "python310"
@@ -54,4 +53,10 @@ resource "google_cloudfunctions_function" "el_311_service_requests" {
   source_archive_object = "el_311_service_requests.zip"
 
   trigger_http = true
+
+  environment_variables = {
+    FETCH_TO_GCS_URL    = var.fetch_to_gcs_url
+    GCS_TO_BIGQUERY_URL = var.gcs_to_bigquery_url
+    GCS_TO_SNOWFLAKE_URL = var.gcs_to_snowflake_url
+  }
 }
