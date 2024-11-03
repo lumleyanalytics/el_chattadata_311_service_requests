@@ -3,6 +3,7 @@ import requests
 from google.auth import default
 from google.auth.transport.requests import Request
 from google.cloud import secretmanager
+from flask import Request
 
 # Function to get an identity token
 def get_identity_token(audience):
@@ -12,7 +13,7 @@ def get_identity_token(audience):
     token = credentials.id_token_with_audience(audience)
     return token
 
-# Function to get secret from Secret Manager
+# Function to get a secret from Secret Manager
 def get_secret(secret_id):
     project_id = os.getenv("GCP_PROJECT_ID")
     client = secretmanager.SecretManagerServiceClient()
@@ -31,8 +32,10 @@ def trigger_cloud_function(url, payload=None):
     response.raise_for_status()
     return response.json()
 
-# Main function to orchestrate function calls
-def main():
+# Main function to orchestrate function calls, handling a JSON payload
+def main(request: Request):
+    request_json = request.get_json(silent=True)  # Accept the JSON payload, ignoring if empty
+
     # URLs for each Cloud Function, obtained from environment variables
     fetch_to_gcs_url = os.getenv("FETCH_TO_GCS_URL")
     gcs_to_bigquery_url = os.getenv("GCS_TO_BIGQUERY_URL")
@@ -89,5 +92,6 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-if __name__ == "__main__":
-    main()
+    # Return a response indicating success
+    return "Triggered all Cloud Functions successfully.", 200
+
