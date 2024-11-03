@@ -84,10 +84,6 @@ module "cloud_functions" {
   region                 = var.region
   gcs_bucket_name        = "lumley-analytics-cloud-run-functions"
   function_prefix        = "lumley-analytics-functions"
-
-  fetch_to_gcs_url       = module.cloud_functions.fetch_to_gcs_url
-  gcs_to_bigquery_url    = module.cloud_functions.gcs_to_bigquery_url
-  gcs_to_snowflake_url   = module.cloud_functions.gcs_to_snowflake_url
 }
 
 

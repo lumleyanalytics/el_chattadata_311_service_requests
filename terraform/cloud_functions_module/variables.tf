@@ -21,20 +21,3 @@ variable "function_prefix" {
   default     = "my-functions"
 }
 
-# cloud_functions_module/variables.tf
-
-variable "fetch_to_gcs_url" {
-  description = "URL for the Fetch to GCS function"
-  type        = string
-}
-
-variable "gcs_to_bigquery_url" {
-  description = "URL for the GCS to BigQuery function"
-  type        = string
-}
-
-variable "gcs_to_snowflake_url" {
-  description = "URL for the GCS to Snowflake function"
-  type        = string
-}
-

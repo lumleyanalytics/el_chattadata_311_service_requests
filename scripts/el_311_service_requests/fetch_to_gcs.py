@@ -3,8 +3,7 @@ import requests
 import pandas as pd
 from google.cloud import storage
 from dotenv import load_dotenv
-from typing import Optional, Dict, Callable
-from flask import Request
+from typing import Optional, Dict
 
 # Load environment variables from .env if they exist
 load_dotenv()
@@ -57,17 +56,8 @@ def clean_description_field(df: pd.DataFrame) -> pd.DataFrame:
         df['description'] = df['description'].apply(lambda x: f'"{x}"' if x and '\\' in str(x) else x)
     return df
 
-# Main function for Cloud Function
-def main(request: Request):
-    request_json = request.get_json(silent=True)
-    
-    # Extract parameters from the request JSON
-    api_url = request_json.get('api_url')
-    gcs_bucket = request_json.get('gcs_bucket')
-    gcs_file_name = request_json.get('gcs_file_name')
-    api_key = request_json.get('api_key', os.getenv("API_KEY"))
-    test_mode = request_json.get('test_mode', False)
-
+# Main function that other scripts can call
+def fetch_to_gcs(api_url: str, gcs_bucket: str, gcs_file_name: str, api_key: Optional[str] = None, test_mode: bool = False):
     # Fetch data from API
     df = fetch_api_data(api_url=api_url, api_key=api_key, test_mode=test_mode)
     
@@ -77,4 +67,4 @@ def main(request: Request):
     # Upload DataFrame to GCS
     upload_to_gcs(df, gcs_bucket, gcs_file_name)
 
-    return f"Data uploaded to {gcs_bucket} as {gcs_file_name}", 200
+    return f"Data uploaded to {gcs_bucket} as {gcs_file_name}"

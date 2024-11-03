@@ -1,11 +1,10 @@
 import os
-import argparse
 import pandas as pd
 from google.cloud import storage, bigquery
 from dotenv import load_dotenv
 from io import StringIO
-from flask import Request
 import logging
+from typing import Optional
 
 # Load environment variables from .env if they exist
 load_dotenv()
@@ -43,38 +42,26 @@ def upload_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table
     job.result()  # Wait for the job to complete
     logging.info(f"Data loaded into BigQuery table {table_ref} with disposition {write_disposition}")
 
-def main(request: Request):
-    # Parse JSON payload from the request
-    request_json = request.get_json(silent=True)
-    if not request_json:
-        logging.error("Invalid or missing JSON payload")
-        return "Invalid or missing JSON payload", 400
-
-    # Retrieve parameters from the request JSON
-    gcs_bucket = request_json.get('gcs_bucket')
-    gcs_file_name = request_json.get('gcs_file_name')
-    bq_project_id = request_json.get('bq_project_id')
-    bq_dataset_id = request_json.get('bq_dataset_id')
-    bq_table_id = request_json.get('bq_table_id')
-    write_disposition = request_json.get('write_disposition', 'WRITE_TRUNCATE')
-
-    # Validate required parameters
-    if not all([gcs_bucket, gcs_file_name, bq_project_id, bq_dataset_id, bq_table_id]):
-        logging.error("Missing required parameters in JSON payload")
-        return "Missing required parameters in JSON payload", 400
-
+def gcs_to_bigquery(
+    gcs_bucket: str,
+    gcs_file_name: str,
+    bq_project_id: str,
+    bq_dataset_id: str,
+    bq_table_id: str,
+    write_disposition: Optional[str] = "WRITE_TRUNCATE"
+):
     # Download data from GCS
     try:
         df = download_from_gcs(gcs_bucket, gcs_file_name)
     except Exception as e:
         logging.error(f"Error downloading data from GCS: {e}")
-        return f"Error downloading data from GCS: {e}", 500
+        raise RuntimeError(f"Error downloading data from GCS: {e}")
 
     # Upload data to BigQuery
     try:
         upload_to_bigquery(df, bq_project_id, bq_dataset_id, bq_table_id, write_disposition)
     except Exception as e:
         logging.error(f"Error uploading data to BigQuery: {e}")
-        return f"Error uploading data to BigQuery: {e}", 500
+        raise RuntimeError(f"Error uploading data to BigQuery: {e}")
 
-    return "Data successfully transferred from GCS to BigQuery", 200
+    return "Data successfully transferred from GCS to BigQuery"

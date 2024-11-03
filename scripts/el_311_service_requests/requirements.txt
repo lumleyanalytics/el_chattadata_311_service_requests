@@ -1,4 +1,10 @@
-google-cloud-secret-manager
-requests
-google-cloud-storage
-python-dotenv
+pandas                      # Data manipulation
+google-cloud-storage        # Interacting with GCS
+google-cloud-bigquery       # Interacting with BigQuery
+google-cloud-secret-manager # Accessing Google Secret Manager
+snowflake-connector-python  # Snowflake connectivity
+google-auth                 # Authentication for Google APIs
+google-auth-oauthlib        # OAuth for Google services
+flask                       # HTTP handling for Cloud Functions
+requests                    # Making HTTP requests
+python-dotenv               # Load environment variables (if needed)
