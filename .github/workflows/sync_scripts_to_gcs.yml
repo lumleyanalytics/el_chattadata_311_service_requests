@@ -58,9 +58,31 @@ jobs:
       # Targeted Terraform Destroy for Cloud Functions Module
       - name: Terraform Destroy Cloud Functions
         working-directory: ./terraform
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: "us-east4"
+          TF_VAR_composer_environment_name: "lumley-analytics-composer-env"
+          TF_VAR_bigquery_dataset_id: "chatt_311_service_requests"
+          TF_VAR_bigquery_table_id: "tst_311_requests"
+          TF_VAR_chattadata_api_key: ${{ secrets.CHATTADATA_API_KEY }}
+          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          TF_VAR_snowflake_account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+
         run: terraform destroy -target=module.cloud_functions -auto-approve
 
       # Targeted Terraform Apply for Cloud Functions Module
       - name: Terraform Apply Cloud Functions
         working-directory: ./terraform
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: "us-east4"
+          TF_VAR_composer_environment_name: "lumley-analytics-composer-env"
+          TF_VAR_bigquery_dataset_id: "chatt_311_service_requests"
+          TF_VAR_bigquery_table_id: "tst_311_requests"
+          TF_VAR_chattadata_api_key: ${{ secrets.CHATTADATA_API_KEY }}
+          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          TF_VAR_snowflake_account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+
         run: terraform apply -target=module.cloud_functions -auto-approve
