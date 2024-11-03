@@ -30,7 +30,7 @@ def main(request=None):
         api_key = get_secret("CHATTADATA_API_KEY")
         
         # Fetch and clean data
-        df = fetch_api_data(api_url=api_url, api_key=api_key, test_mode=True)
+        df = fetch_api_data(api_url=api_url, api_key=api_key, test_mode=False)
         df = clean_description_field(df)
         
         # Upload data to GCS
