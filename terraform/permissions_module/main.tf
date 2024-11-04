@@ -26,15 +26,10 @@ resource "google_storage_bucket_iam_member" "object_storage_admin" {
 
 # Grant Cloud Run Invoker role to the Scheduler service account
 resource "google_cloud_run_service_iam_member" "scheduler_invoker" {
-  service     = module.cloud_run.fetch_data_service.name
-  location    = var.region
-  project     = var.project_id
+  location    = google_cloud_run_service.fetch_data_service.location
+  project     = google_cloud_run_service.fetch_data_service.project
+  service     = google_cloud_run_service.fetch_data_service.name
   role        = "roles/run.invoker"
-  member      = "serviceAccount:${module.service_accounts.scheduler_sa_email}"
+  member      = "serviceAccount:${module.service_accounts.scheduler_sa.email}"  # Make sure this matches your service account
 }
-
-
-
-
-
 

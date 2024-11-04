@@ -4,10 +4,7 @@ variable "project_id" {
 }
 
 variable "region" {
-  type = string
-}
-
-variable "dataset_id" {
+  description = "Google Cloud region"
   type = string
 }
 
