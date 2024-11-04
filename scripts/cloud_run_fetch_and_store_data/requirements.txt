@@ -1,5 +1,11 @@
-flask                         # For handling HTTP requests
-google-cloud-storage          # For interacting with Google Cloud Storage
-requests                      # For making API requests
-pandas                        # For data manipulation
-python-dotenv                 # For loading environment variables (optional)
+pandas
+google-cloud-storage
+google-cloud-bigquery
+google-cloud-secret-manager
+snowflake-connector-python
+google-auth
+google-auth-oauthlib
+flask
+requests
+python-dotenv
+gunicorn  # Add this line
