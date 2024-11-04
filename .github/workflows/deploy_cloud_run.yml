@@ -1,0 +1,33 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    paths:
+      - "scripts/cloud_run_fetch_and_store_data/**"  # Trigger when files in this directory change
+  workflow_dispatch:  # Allows manual trigger of the workflow
+
+jobs:
+  deploy-cloud-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    # Step 1: Authenticate with Google Cloud
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    # Step 2: Set up Google Cloud SDK
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        install_components: "cloud-build-local"
+
+    # Step 3: Trigger Google Cloud Build
+    - name: Trigger Cloud Build for Cloud Run Image
+      run: |
+        gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/fetch-data-to-gcs:latest scripts/cloud_run_fetch_and_store_data

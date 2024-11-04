@@ -24,6 +24,16 @@ resource "google_storage_bucket_iam_member" "object_storage_admin" {
   member = "serviceAccount:terraform-admin-sa@lumley-analytics.iam.gserviceaccount.com"  # Update if a different service account is used
 }
 
+# Grant Cloud Run Invoker role to the Scheduler service account
+resource "google_cloud_run_service_iam_member" "scheduler_invoker" {
+  service     = module.cloud_run.fetch_data_service.name
+  location    = var.region
+  project     = var.project_id
+  role        = "roles/run.invoker"
+  member      = "serviceAccount:${module.service_accounts.scheduler_sa_email}"
+}
+
+
 
 
 

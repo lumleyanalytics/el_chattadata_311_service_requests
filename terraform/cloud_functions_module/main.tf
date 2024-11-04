@@ -7,6 +7,7 @@ resource "google_cloudfunctions_function" "el_311_service_requests" {
   region      = var.region
 
   available_memory_mb   = 1024
+  timeout               = 540
 
   source_archive_bucket = var.gcs_bucket_name
   source_archive_object = "el_311_service_requests.zip"
