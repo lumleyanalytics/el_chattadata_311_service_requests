@@ -3,6 +3,7 @@
 resource "google_service_account" "terraform_sa" {
   account_id   = "terraform-admin-sa"
   display_name = "Terraform Admin Service Account"
+  project = "lumley-analytics"
 }
 
 resource "google_service_account_key" "terraform_sa_key" {
